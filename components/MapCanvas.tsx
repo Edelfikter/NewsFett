@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
-import Popup from './Popup';
 import type { NewsItemWithUI } from '@/hooks/useNewsStream';
 import { WORLD_MASK, MASK_COLS, MASK_ROWS, geoToFraction } from '@/lib/worldMask';
 
@@ -14,10 +13,9 @@ interface Props {
   items: NewsItemWithUI[];
   pinnedId: string | null;
   onPin: (id: string | null) => void;
-  onDismiss: (id: string) => void;
 }
 
-export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) {
+export default function MapCanvas({ items, pinnedId, onPin }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
@@ -71,20 +69,6 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
     [width, height]
   );
 
-  // Dismiss popup - delegate to parent which handles state
-  const dismissPopup = useCallback(
-    (id: string) => {
-      onDismiss(id);
-    },
-    [onDismiss]
-  );
-
-  // Active popups
-  const activePopups = useMemo(
-    () => items.filter((it) => it.showPopup),
-    [items]
-  );
-
   return (
     <div ref={containerRef} className="relative w-full h-full">
       <svg
@@ -107,8 +91,8 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
           />
         ))}
 
-        {/* News markers – red circle with white stroke/glow */}
-        {activePopups.map((item) => {
+        {/* News markers – permanent dot for every item with location */}
+        {items.map((item) => {
           const [px, py] = geoToPixel(item.lon, item.lat);
           const isPinned = item.id === pinnedId;
           return (
@@ -116,30 +100,26 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
               key={item.id}
               cx={px}
               cy={py}
-              r={isPinned ? 6 : 5}
+              r={isPinned ? 6 : 4}
               fill="var(--marker-red)"
               stroke="#fff"
-              strokeWidth={1.6}
-              style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.45))' }}
+              strokeWidth={1.4}
+              style={{ filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.35))' }}
             />
           );
         })}
-      </svg>
 
-      {/* Popup overlays */}
-      {activePopups.map((item) => {
-        const [fx, fy] = geoToFraction(item.lon, item.lat);
-        return (
-          <Popup
-            key={item.id}
-            item={item}
-            x={fx}
-            y={fy}
-            onDismiss={() => dismissPopup(item.id)}
-            onPin={onPin}
-          />
-        );
-      })}
+        {/* Blip rings – animated expanding ring for newly arrived items */}
+        {items.filter((it) => it.flashing).map((item) => {
+          const [px, py] = geoToPixel(item.lon, item.lat);
+          return (
+            <circle key={`blip-${item.id}`} cx={px} cy={py} r={5} fill="none" stroke="var(--marker-red)" strokeWidth={2}>
+              <animate attributeName="r" from="5" to="22" dur="1.8s" fill="freeze" />
+              <animate attributeName="opacity" from="0.9" to="0" dur="1.8s" fill="freeze" />
+            </circle>
+          );
+        })}
+      </svg>
     </div>
   );
 }
