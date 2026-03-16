@@ -3,20 +3,17 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import {
   ComposableMap,
-  Geographies,
-  Geography,
   Marker,
 } from 'react-simple-maps';
 import { geoEqualEarth } from 'd3-geo';
 import Popup from './Popup';
 import type { NewsItemWithUI } from '@/hooks/useNewsStream';
 
-const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
-
 // Dot grid configuration
 const DOT_COLS = 72;
 const DOT_ROWS = 36;
-const DOT_R = 1.4;
+const DOT_SIZE = 3.6;
+const DOT_RX = 0.6;
 
 type ProjectFn = (coord: [number, number]) => [number, number] | null;
 
@@ -100,39 +97,21 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
         height={height}
         style={{ width: '100%', height: '100%' }}
       >
-        {/* Country fills */}
-        <Geographies geography={GEO_URL}>
-          {({ geographies }) =>
-            geographies.map((geo) => (
-              <Geography
-                key={geo.rsmKey}
-                geography={geo}
-                fill="#0d2447"
-                stroke="#1a3a6b"
-                strokeWidth={0.4}
-                style={{
-                  default: { outline: 'none' },
-                  hover: { outline: 'none' },
-                  pressed: { outline: 'none' },
-                }}
-              />
-            ))
-          }
-        </Geographies>
-
-        {/* Dot grid */}
+        {/* Dot grid – square rects form the land map */}
         {dots.map((dot) => (
-          <circle
+          <rect
             key={dot.key}
-            cx={dot.cx}
-            cy={dot.cy}
-            r={DOT_R}
-            fill="#9ad37f"
-            opacity={0.35}
+            x={dot.cx - DOT_SIZE / 2}
+            y={dot.cy - DOT_SIZE / 2}
+            width={DOT_SIZE}
+            height={DOT_SIZE}
+            rx={DOT_RX}
+            fill="var(--dot-base)"
+            opacity={0.78}
           />
         ))}
 
-        {/* News markers */}
+        {/* News markers – red circle with white stroke/glow */}
         {activePopups.map((item) => {
           const pos = project([item.lon, item.lat]);
           if (!pos) return null;
@@ -140,10 +119,11 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
           return (
             <Marker key={item.id} coordinates={[item.lon, item.lat]}>
               <circle
-                r={isPinned ? 5 : 4}
-                fill="#c7ff8b"
-                opacity={isPinned ? 1 : 0.9}
-                style={{ filter: `drop-shadow(0 0 ${isPinned ? 7 : 4}px #c7ff8b)` }}
+                r={isPinned ? 6 : 5}
+                fill="var(--marker-red)"
+                stroke="#fff"
+                strokeWidth={1.6}
+                style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.45))' }}
               />
             </Marker>
           );

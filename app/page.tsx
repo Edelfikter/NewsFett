@@ -22,7 +22,7 @@ export default function Home() {
   const [showAddFeed, setShowAddFeed] = useState(false);
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-gradient-to-br from-[#0b1d3a] via-[#0f2c5c] to-[#091628]">
+    <main className="relative h-screen w-screen overflow-hidden">
       {/* Top bar */}
       <TopBar onAddFeed={() => setShowAddFeed(true)} />
 
