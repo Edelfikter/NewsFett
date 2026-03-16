@@ -1,0 +1,14 @@
+name: Poll feeds every 20 minutes
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+  workflow_dispatch:
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call poll endpoint
+        run: |
+          curl -X POST "${{ secrets.NEWSFETT_URL }}/api/poll"
