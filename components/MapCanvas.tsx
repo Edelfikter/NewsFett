@@ -8,8 +8,7 @@ import { WORLD_MASK, MASK_COLS, MASK_ROWS, geoToFraction } from '@/lib/worldMask
 // Dot grid sizing — matches the 72 × 36 mask
 const DOT_COLS = MASK_COLS;
 const DOT_ROWS = MASK_ROWS;
-const DOT_SIZE = 3.5;
-const DOT_GAP = 0.8;  // gap between dots (fraction of cell)
+const DOT_MARGIN = 0.18; // fraction of cell size used as margin between adjacent dots
 
 interface Props {
   items: NewsItemWithUI[];
@@ -41,9 +40,9 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
   // Cell size in pixels
   const cellW = width / DOT_COLS;
   const cellH = height / DOT_ROWS;
-  // Dot rendered size: leave a small gap between cells
-  const dotW = Math.max(1.5, cellW * (1 - DOT_GAP * 0.18));
-  const dotH = Math.max(1.5, cellH * (1 - DOT_GAP * 0.18));
+  // Dot rendered size: leave a small margin between cells
+  const dotW = Math.max(1.5, cellW * (1 - DOT_MARGIN));
+  const dotH = Math.max(1.5, cellH * (1 - DOT_MARGIN));
 
   // Build land-dot list from the fixed pixel mask (no projection distortion)
   const dots = useMemo(() => {
@@ -102,7 +101,7 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
             y={dot.y - dotH / 2}
             width={dotW}
             height={dotH}
-            rx={Math.min(dotW, dotH) * 0.18}
+            rx={Math.min(dotW, dotH) * DOT_MARGIN}
             fill="var(--dot-base)"
             opacity={0.78}
           />
