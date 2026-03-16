@@ -8,54 +8,28 @@ interface Props {
 
 export default function TopBar({ onAddFeed }: Props) {
   const [now, setNow] = useState(new Date());
-  const [balloonsOn, setBalloonsOn] = useState(true);
-
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const timeStr = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-  const dateStr = now.toLocaleDateString('en-US', {
-    weekday: 'long',
-    month: 'long',
-    day: 'numeric',
-  });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <div
-      className="z-20 h-12 flex items-center justify-between px-5 border-b border-white/10 flex-shrink-0"
-      style={{ background: 'rgba(0,0,0,0.15)' }}
-    >
-      {/* Left: NEWSFETT wordmark + balloon toggle */}
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl font-black uppercase tracking-[-0.04em] text-white select-none">
-          NEWSFETT
-        </h1>
-        <span className="text-white/30 select-none">·</span>
-        <span className="text-[11px] font-bold text-white/65 tracking-tight">
-          Balloon:{' '}
-          <button
-            onClick={() => setBalloonsOn((v) => !v)}
-            className="text-white hover:text-yellow-200 transition-colors underline decoration-white/30"
-            aria-label="Toggle balloon popups"
-          >
-            {balloonsOn ? 'On' : 'Off'}
-          </button>
-        </span>
+    <div className="topbar glass flex items-center justify-between px-6 py-3 mb-4">
+      <div className="flex items-baseline gap-3">
+        <span className="text-lg font-black tracking-[0.08em] uppercase">NewsFett</span>
+        <span className="text-sm font-semibold tracking-[0.04em] text-white/75">{dateStr}</span>
       </div>
-
-      {/* Right: date + large clock */}
       <div className="flex items-center gap-4">
-        <span className="text-[13px] font-bold text-white/70 tracking-tight">{dateStr}</span>
-        <span className="text-2xl font-black text-white drop-shadow tracking-[-0.04em] tabular-nums">
-          {timeStr}
-        </span>
+        <span className="text-2xl font-black tracking-[0.08em]">{timeStr}</span>
+        <button
+          onClick={onAddFeed}
+          className="text-[11px] font-bold tracking-[0.08em] text-white/65 hover:text-white transition-colors"
+        >
+          Balloon On/Off
+        </button>
       </div>
     </div>
   );
