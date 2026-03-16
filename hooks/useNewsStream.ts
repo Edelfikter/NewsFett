@@ -6,8 +6,7 @@ import type { NewsItem } from '@/lib/redis';
 import { MOCK_ITEMS } from '@/lib/mockData';
 
 const POLL_INTERVAL = 12000; // 12s
-const POPUP_DURATION = 12000; // 12s auto-dismiss
-const SETTLE_DELAY = 20000; // 20s after page load before showing popups for real items
+const BLIP_DURATION = 1800; // 1.8s — matches the dot-blip CSS animation
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -18,26 +17,19 @@ export interface NewsItemWithUI extends NewsItem {
 
 export function useNewsStream() {
   const sinceRef = useRef<number>(Date.now() - 60 * 60 * 1000); // last hour
-  const settledRef = useRef<boolean>(false);
   const [items, setItems] = useState<NewsItemWithUI[]>(() =>
     MOCK_ITEMS.map((it) => ({ ...it, showPopup: false, pinned: false }))
   );
   const [pinnedId, setPinnedId] = useState<string | null>(null);
+  const [blipIds, setBlipIds] = useState<Set<string>>(new Set());
   const timerMap = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const blipTimerMap = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const { data } = useSWR<NewsItem[]>(
     `/api/latest?since=${sinceRef.current}`,
     fetcher,
     { refreshInterval: POLL_INTERVAL, errorRetryCount: 3 }
   );
-
-  // Mark user as "settled" after SETTLE_DELAY ms; only then will new real items show popups
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      settledRef.current = true;
-    }, SETTLE_DELAY);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     if (!data || !Array.isArray(data) || data.length === 0) return;
@@ -51,27 +43,31 @@ export function useNewsStream() {
       const newOnes = data.filter((d) => !existingIds.has(d.id));
       if (newOnes.length === 0) return prev;
 
-      // Only show popups for real items after the settle delay has passed
-      const showPopup = settledRef.current;
-
+      // New items go straight into the list — no auto-popup
       const withUI: NewsItemWithUI[] = newOnes.map((it) => ({
         ...it,
-        showPopup,
+        showPopup: false,
         pinned: false,
       }));
 
-      if (showPopup) {
-        // Schedule auto-dismiss for new items shown as popups
-        withUI.forEach((item) => {
-          const timer = setTimeout(() => {
-            setItems((cur) =>
-              cur.map((c) => (c.id === item.id && !c.pinned ? { ...c, showPopup: false } : c))
-            );
-            timerMap.current.delete(item.id);
-          }, POPUP_DURATION);
-          timerMap.current.set(item.id, timer);
-        });
-      }
+      // Trigger a transient red blip for each new item's dot
+      withUI.forEach((item) => {
+        setBlipIds((prev) => new Set(prev).add(item.id));
+
+        // Clear any existing blip timer for this id
+        const existing = blipTimerMap.current.get(item.id);
+        if (existing) clearTimeout(existing);
+
+        const t = setTimeout(() => {
+          setBlipIds((prev) => {
+            const next = new Set(prev);
+            next.delete(item.id);
+            return next;
+          });
+          blipTimerMap.current.delete(item.id);
+        }, BLIP_DURATION);
+        blipTimerMap.current.set(item.id, t);
+      });
 
       return [...withUI, ...prev].slice(0, 100);
     });
@@ -110,5 +106,5 @@ export function useNewsStream() {
     }
   }, []);
 
-  return { items, pinnedId, setPinnedId: handleSetPinned, dismissPopup };
+  return { items, blipIds, pinnedId, setPinnedId: handleSetPinned, dismissPopup };
 }

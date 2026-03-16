@@ -17,7 +17,7 @@ const MapCanvas = dynamic(() => import('@/components/MapCanvas'), {
 });
 
 export default function Home() {
-  const { items, pinnedId, setPinnedId, dismissPopup } = useNewsStream();
+  const { items, blipIds, pinnedId, setPinnedId, dismissPopup } = useNewsStream();
   const [showAddFeed, setShowAddFeed] = useState(false);
 
   return (
@@ -29,7 +29,7 @@ export default function Home() {
         <div className="flex gap-6 items-start justify-center">
           {/* Map box */}
           <div className="map-frame">
-            <MapCanvas items={items} pinnedId={pinnedId} onPin={setPinnedId} onDismiss={dismissPopup} />
+            <MapCanvas items={items} blipIds={blipIds} pinnedId={pinnedId} onPin={setPinnedId} onDismiss={dismissPopup} />
           </div>
 
           {/* Sidebar same height as map, snug to its right */}

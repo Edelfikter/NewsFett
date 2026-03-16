@@ -12,12 +12,13 @@ const DOT_MARGIN = 0.18; // fraction of cell size used as margin between adjacen
 
 interface Props {
   items: NewsItemWithUI[];
+  blipIds: Set<string>;
   pinnedId: string | null;
   onPin: (id: string | null) => void;
   onDismiss: (id: string) => void;
 }
 
-export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) {
+export default function MapCanvas({ items, blipIds, pinnedId, onPin, onDismiss }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
@@ -85,6 +86,12 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
     [items]
   );
 
+  // Items currently blipping (new arrival flash)
+  const blipItems = useMemo(
+    () => items.filter((it) => blipIds.has(it.id)),
+    [items, blipIds]
+  );
+
   return (
     <div ref={containerRef} className="relative w-full h-full">
       <svg
@@ -121,6 +128,23 @@ export default function MapCanvas({ items, pinnedId, onPin, onDismiss }: Props) 
               stroke="#fff"
               strokeWidth={1.6}
               style={{ filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.45))' }}
+            />
+          );
+        })}
+
+        {/* Blip overlays – brief red flash for newly arrived items */}
+        {blipItems.map((item) => {
+          const [px, py] = geoToPixel(item.lon, item.lat);
+          return (
+            <rect
+              key={`blip-${item.id}`}
+              x={px - dotW / 2}
+              y={py - dotH / 2}
+              width={dotW}
+              height={dotH}
+              rx={Math.min(dotW, dotH) * DOT_MARGIN}
+              fill="var(--marker-red)"
+              className="dot-blip"
             />
           );
         })}
