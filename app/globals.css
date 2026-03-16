@@ -21,20 +21,62 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow: hidden;
   background: var(--bg);
-  background-image:
-    repeating-linear-gradient(
-      to right,
-      var(--bg-stripe) 0,
-      var(--bg-stripe) 6px,
-      transparent 6px,
-      transparent 26px
-    );
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--bg-stripe) 0,
+    var(--bg-stripe) 6px,
+    transparent 6px,
+    transparent 26px
+  );
   font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
   font-weight: 700;
-  letter-spacing: -0.02em;
   color: var(--text-main);
+}
+
+/* utility for the background stripes class */
+.bg-stripes {
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--bg-stripe) 0,
+    var(--bg-stripe) 6px,
+    transparent 6px,
+    transparent 26px
+  );
+}
+
+/* centered shell: caps the width */
+.layout-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Map + sidebar framing */
+.map-frame {
+  width: 880px;
+  height: 520px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.sidebar-frame {
+  width: 280px;
+  height: 520px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Top bar styling */
+.topbar {
+  border: 1px solid var(--glass-border);
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.02));
+  border-radius: 6px;
 }
 
 /* Glass utility */
@@ -43,15 +85,6 @@ body {
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
 }
 
 /* Scrollbar for sidebar */
