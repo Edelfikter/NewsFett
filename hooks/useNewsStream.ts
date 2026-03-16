@@ -7,6 +7,7 @@ import { MOCK_ITEMS } from '@/lib/mockData';
 
 const POLL_INTERVAL = 12000; // 12s
 const POPUP_DURATION = 12000; // 12s auto-dismiss
+const SETTLE_DELAY = 20000; // 20s after page load before showing popups for real items
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -17,6 +18,7 @@ export interface NewsItemWithUI extends NewsItem {
 
 export function useNewsStream() {
   const sinceRef = useRef<number>(Date.now() - 60 * 60 * 1000); // last hour
+  const settledRef = useRef<boolean>(false);
   const [items, setItems] = useState<NewsItemWithUI[]>(() =>
     MOCK_ITEMS.map((it) => ({ ...it, showPopup: false, pinned: false }))
   );
@@ -28,6 +30,14 @@ export function useNewsStream() {
     fetcher,
     { refreshInterval: POLL_INTERVAL, errorRetryCount: 3 }
   );
+
+  // Mark user as "settled" after SETTLE_DELAY ms; only then will new real items show popups
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      settledRef.current = true;
+    }, SETTLE_DELAY);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!data || !Array.isArray(data) || data.length === 0) return;
@@ -41,22 +51,27 @@ export function useNewsStream() {
       const newOnes = data.filter((d) => !existingIds.has(d.id));
       if (newOnes.length === 0) return prev;
 
+      // Only show popups for real items after the settle delay has passed
+      const showPopup = settledRef.current;
+
       const withUI: NewsItemWithUI[] = newOnes.map((it) => ({
         ...it,
-        showPopup: true,
+        showPopup,
         pinned: false,
       }));
 
-      // Schedule auto-dismiss for new items
-      withUI.forEach((item) => {
-        const timer = setTimeout(() => {
-          setItems((cur) =>
-            cur.map((c) => (c.id === item.id && !c.pinned ? { ...c, showPopup: false } : c))
-          );
-          timerMap.current.delete(item.id);
-        }, POPUP_DURATION);
-        timerMap.current.set(item.id, timer);
-      });
+      if (showPopup) {
+        // Schedule auto-dismiss for new items shown as popups
+        withUI.forEach((item) => {
+          const timer = setTimeout(() => {
+            setItems((cur) =>
+              cur.map((c) => (c.id === item.id && !c.pinned ? { ...c, showPopup: false } : c))
+            );
+            timerMap.current.delete(item.id);
+          }, POPUP_DURATION);
+          timerMap.current.set(item.id, timer);
+        });
+      }
 
       return [...withUI, ...prev].slice(0, 100);
     });
@@ -93,35 +108,6 @@ export function useNewsStream() {
       clearTimeout(t);
       timerMap.current.delete(id);
     }
-  }, []);
-
-  // Show initial mock popups one by one
-  useEffect(() => {
-    let mockItemIndex = 0;
-    const interval = setInterval(() => {
-      if (mockItemIndex >= MOCK_ITEMS.length) {
-        clearInterval(interval);
-        return;
-      }
-      const id = MOCK_ITEMS[mockItemIndex].id;
-      setItems((prev) =>
-        prev.map((it) => (it.id === id ? { ...it, showPopup: true } : it))
-      );
-      const timer = setTimeout(() => {
-        setItems((prev) =>
-          prev.map((it) => (it.id === id && !it.pinned ? { ...it, showPopup: false } : it))
-        );
-        timerMap.current.delete(id);
-      }, POPUP_DURATION);
-      timerMap.current.set(id, timer);
-      mockItemIndex++;
-    }, 3000);
-    return () => {
-      clearInterval(interval);
-      // Clear all pending popup timers
-      timerMap.current.forEach((t) => clearTimeout(t));
-      timerMap.current.clear();
-    };
   }, []);
 
   return { items, pinnedId, setPinnedId: handleSetPinned, dismissPopup };
