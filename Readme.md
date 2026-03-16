@@ -1,6 +1,6 @@
 # NewsFett 🌍
 
-**Live Global News Map** — a Vercel-ready Next.js 14 application that visualises RSS news headlines as interactive popups appearing at geo-located positions on a world map.
+**Live Global News Map** — a Vercel-ready Next.js 15 application that visualises RSS news headlines as interactive popups appearing at geo-located positions on a world map.
 
 ---
 
@@ -21,7 +21,7 @@
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 14 (App Router) |
+| Framework | Next.js 15 (App Router) |
 | Styling | Tailwind CSS 3 |
 | Map | react-simple-maps + D3 projections |
 | RSS parsing | fast-xml-parser |
