@@ -102,3 +102,16 @@ body {
   background: rgba(197, 216, 109, 0.35);
   border-radius: 2px;
 }
+
+/* Dot blip animation for new news arrivals */
+@keyframes dot-blip {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  65%  { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+.dot-blip {
+  animation: dot-blip 1.8s ease-out forwards;
+  pointer-events: none;
+}
