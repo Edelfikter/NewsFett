@@ -5,8 +5,8 @@ import type { NewsItemWithUI } from '@/hooks/useNewsStream';
 
 interface Props {
   item: NewsItemWithUI;
-  x: number; // SVG viewport x
-  y: number; // SVG viewport y
+  x: number; // fraction 0–1 of map container width
+  y: number; // fraction 0–1 of map container height
   onDismiss: () => void;
   onPin: (id: string) => void;
 }
@@ -26,68 +26,76 @@ export default function Popup({ item, x, y, onDismiss, onPin }: Props) {
     return () => cancelAnimationFrame(t);
   }, []);
 
-  // Compute CSS left/top from SVG % coords
-  // x, y are fractions 0–1 of the map container
+  const sourceName = (item.source.replace(/^www\./, '').split('.')[0] || item.source).toUpperCase();
+
   const style: React.CSSProperties = {
-    left: `calc(${x * 100}% - 120px)`,
-    top: `calc(${y * 100}% - 90px)`,
+    left: `calc(${x * 100}% - 148px)`,
+    top: `calc(${y * 100}% - 80px)`,
     opacity: visible ? 1 : 0,
-    transform: visible ? 'scale(1) translateY(0)' : 'scale(0.85) translateY(8px)',
-    transition: 'opacity 0.3s ease, transform 0.3s ease',
+    transform: visible ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(8px)',
+    transition: 'opacity 0.25s ease, transform 0.25s ease',
     pointerEvents: 'auto',
   };
 
   return (
-    <div
-      className="absolute z-30 w-60 glass rounded-xl shadow-[0_10px_35px_rgba(0,0,0,0.45)] border border-white/15"
-      style={style}
-    >
-      {/* Connector dot */}
-      <div
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 rounded-full bg-[#c7ff8b] shadow-[0_0_6px_#c7ff8b]"
-      />
+    <div className="absolute z-30" style={style}>
+      {/* Bubble chain – three diminishing red circles on the left */}
+      <div className="absolute -left-7 top-10 flex flex-col gap-1.5 items-center">
+        <span className="block w-3.5 h-3.5 rounded-full bg-[var(--marker-red)] border-2 border-white/70 shadow-sm" />
+        <span className="block w-2.5 h-2.5 rounded-full bg-[var(--marker-red)] border border-white/60 shadow-sm" />
+        <span className="block w-1.5 h-1.5 rounded-full bg-[var(--marker-red)] border border-white/50" />
+      </div>
 
-      <div className="p-3">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[9px] font-bold tracking-widest uppercase text-[#9ad37f] bg-[#9ad37f]/10 px-1.5 py-0.5 rounded-sm">
-            {item.source.replace(/^www\./, '').split('.')[0]}
-          </span>
-          <div className="flex items-center gap-1.5">
-            {/* Pin */}
+      {/* Pill outer (red) */}
+      <div
+        className="relative min-w-[296px] max-w-[320px] rounded-[22px] border-2 border-white shadow-[0_14px_36px_rgba(0,0,0,0.6)]"
+        style={{ background: 'var(--marker-red)' }}
+      >
+        {/* White inner panel */}
+        <div className="bg-white/96 text-[#111] rounded-[18px] m-[5px] px-4 py-3 leading-tight">
+          {/* Source label */}
+          <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: 'var(--marker-orange)' }}>
+            {sourceName}
+          </div>
+
+          {/* Headline */}
+          <div className="text-[15px] font-bold leading-snug mb-2 line-clamp-3">
+            {item.title}
+          </div>
+
+          {/* Article link */}
+          <a
+            href={item.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] font-bold underline"
+            style={{ color: '#0d4fa3', textDecorationColor: 'var(--marker-orange)' }}
+          >
+            Open article ↗
+          </a>
+        </div>
+
+        {/* Footer bar inside the red pill */}
+        <div className="flex items-center justify-between px-4 pb-2.5 pt-0.5 text-[10px] text-white/85 font-bold tracking-wide">
+          <span>{timeAgo(item.publishedAt)}</span>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onPin(item.id)}
-              className={`text-[10px] transition-colors ${
-                item.pinned ? 'text-[#c7ff8b]' : 'text-white/30 hover:text-white/60'
-              }`}
+              className="text-white hover:text-yellow-200 transition-colors"
               title={item.pinned ? 'Pinned' : 'Pin'}
+              aria-label={item.pinned ? 'Pinned' : 'Pin article'}
             >
               {item.pinned ? '📌' : '⊙'}
             </button>
-            {/* Close */}
             <button
               onClick={onDismiss}
-              className="text-white/30 hover:text-white/80 transition-colors text-sm leading-none"
+              className="text-white/75 hover:text-white transition-colors text-base leading-none"
               title="Dismiss"
+              aria-label="Dismiss popup"
             >
               ×
             </button>
           </div>
-        </div>
-
-        {/* Headline */}
-        <a
-          href={item.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-xs font-light leading-snug text-white/85 hover:text-white transition-colors line-clamp-3"
-        >
-          {item.title}
-        </a>
-
-        {/* Footer */}
-        <div className="mt-2 text-[10px] text-white/30 font-bold tracking-wider">
-          {timeAgo(item.publishedAt)}
         </div>
       </div>
     </div>
