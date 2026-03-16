@@ -4,12 +4,21 @@ import useSWR from 'swr';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { NewsItem } from '@/lib/redis';
 import { MOCK_ITEMS } from '@/lib/mockData';
+import { getLocalFeeds } from '@/lib/localFeeds';
 
 const POLL_INTERVAL = 12000; // 12s
 const POPUP_DURATION = 12000; // 12s auto-dismiss
 const SETTLE_DELAY = 20000; // 20s after page load before showing popups for real items
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+const userFeedsFetcher = ([, feeds]: [string, string[]]) => {
+  return fetch('/api/user-feeds', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ feeds }),
+  }).then((r) => r.json());
+};
 
 export interface NewsItemWithUI extends NewsItem {
   showPopup: boolean;
@@ -25,10 +34,33 @@ export function useNewsStream() {
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const timerMap = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
+  // Local (device-scoped) feeds – stored in localStorage, never sent to the global store
+  const [localFeeds, setLocalFeeds] = useState<string[]>([]);
+
+  // Read local feeds from localStorage once on mount (client only)
+  useEffect(() => {
+    setLocalFeeds(getLocalFeeds());
+  }, []);
+
+  // Allows components to trigger a refresh when a new local feed is added
+  const refreshLocalFeeds = useCallback(() => {
+    setLocalFeeds(getLocalFeeds());
+  }, []);
+
   const { data } = useSWR<NewsItem[]>(
     `/api/latest?since=${sinceRef.current}`,
     fetcher,
     { refreshInterval: POLL_INTERVAL, errorRetryCount: 3 }
+  );
+
+  // Poll user-added (device-local) feeds independently using the proxy endpoint
+  const userFeedsSWRKey: [string, string[]] | null =
+    localFeeds.length > 0 ? ['/api/user-feeds', localFeeds] : null;
+
+  const { data: userFeedsData } = useSWR<NewsItem[]>(
+    userFeedsSWRKey,
+    userFeedsFetcher,
+    { refreshInterval: POLL_INTERVAL, errorRetryCount: 2 }
   );
 
   // Mark user as "settled" after SETTLE_DELAY ms; only then will new real items show popups
@@ -77,6 +109,24 @@ export function useNewsStream() {
     });
   }, [data]);
 
+  useEffect(() => {
+    if (!userFeedsData || !Array.isArray(userFeedsData) || userFeedsData.length === 0) return;
+
+    setItems((prev) => {
+      const existingIds = new Set(prev.map((p) => p.id));
+      const newOnes = userFeedsData.filter((d) => !existingIds.has(d.id));
+      if (newOnes.length === 0) return prev;
+
+      const withUI: NewsItemWithUI[] = newOnes.map((it) => ({
+        ...it,
+        showPopup: false,
+        pinned: false,
+      }));
+
+      return [...withUI, ...prev].slice(0, 100);
+    });
+  }, [userFeedsData]);
+
   const handleSetPinned = useCallback((id: string | null) => {
     setPinnedId(id);
     setItems((prev) =>
@@ -110,5 +160,5 @@ export function useNewsStream() {
     }
   }, []);
 
-  return { items, pinnedId, setPinnedId: handleSetPinned, dismissPopup };
+  return { items, pinnedId, setPinnedId: handleSetPinned, dismissPopup, refreshLocalFeeds };
 }
