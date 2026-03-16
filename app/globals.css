@@ -47,15 +47,15 @@ body {
 
 /* centered shell: caps the width */
 .layout-shell {
-  max-width: 1180px;
+  max-width: 944px;
   margin: 0 auto;
   width: 100%;
 }
 
 /* Map + sidebar framing */
 .map-frame {
-  width: 880px;
-  height: 520px;
+  width: 704px;
+  height: 416px;
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;
@@ -64,8 +64,8 @@ body {
 }
 
 .sidebar-frame {
-  width: 280px;
-  height: 520px;
+  width: 224px;
+  height: 416px;
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 6px;

@@ -19,7 +19,7 @@ export default function TopBar({ onAddFeed }: Props) {
   return (
     <div className="topbar glass flex items-center justify-between px-6 py-3 mb-4">
       <div className="flex items-baseline gap-3">
-        <span className="text-lg font-black tracking-[0.08em] uppercase">NewsFett</span>
+        <span className="text-2xl font-black tracking-[-0.02em]">NewsFett</span>
         <span className="text-sm font-semibold tracking-[0.04em] text-white/75">{dateStr}</span>
       </div>
       <div className="flex items-center gap-4">
