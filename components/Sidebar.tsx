@@ -24,7 +24,7 @@ export default function Sidebar({ items, pinnedId, onPin }: Props) {
   );
 
   return (
-    <aside className="absolute top-12 right-0 bottom-0 z-10 w-72 flex flex-col glass border-l border-white/10 overflow-hidden">
+    <aside className="w-72 flex-shrink-0 flex flex-col glass border-l border-white/10 overflow-hidden">
       <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
         <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-white/40">
           Latest
