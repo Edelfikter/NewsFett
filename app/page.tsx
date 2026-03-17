@@ -29,7 +29,7 @@ export default function Home() {
         <div className="flex gap-6 items-start justify-center">
           {/* Map box */}
           <div className="map-frame">
-            <MapCanvas items={items} pinnedId={pinnedId} onPin={setPinnedId} onDismiss={dismissPopup} />
+            <MapCanvas items={items} pinnedId={pinnedId} onPin={setPinnedId} />
           </div>
 
           {/* Sidebar same height as map, snug to its right */}
