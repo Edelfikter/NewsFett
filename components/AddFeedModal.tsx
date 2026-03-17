@@ -1,48 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import { addLocalFeed, type AddFeedResult } from '@/lib/localFeeds';
 
 interface Props {
   onClose: () => void;
-  /** Called after a feed is successfully saved so the stream can refresh. */
-  onFeedAdded?: () => void;
 }
 
-export default function AddFeedModal({ onClose, onFeedAdded }: Props) {
+export default function AddFeedModal({ onClose }: Props) {
   const [url, setUrl] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [msg, setMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = url.trim();
-    if (!trimmed) return;
-
-    // Validate URL on the client before saving
+    if (!url.trim()) return;
+    setStatus('loading');
     try {
-      const parsed = new URL(trimmed);
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        throw new Error('invalid protocol');
+      const res = await fetch('/api/feeds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus('success');
+        setMsg('Feed added successfully!');
+        setUrl('');
+      } else {
+        setStatus('error');
+        setMsg(data.error || 'Failed to add feed');
       }
     } catch {
       setStatus('error');
-      setMsg('Please enter a valid http(s) feed URL.');
-      return;
-    }
-
-    const result: AddFeedResult = addLocalFeed(trimmed);
-    if (result === 'added') {
-      setStatus('success');
-      setMsg('Feed saved to your device!');
-      setUrl('');
-      onFeedAdded?.();
-    } else if (result === 'duplicate') {
-      setStatus('success');
-      setMsg('Feed is already in your list.');
-    } else {
-      setStatus('error');
-      setMsg('Failed to save feed. Please try again.');
+      setMsg('Network error. Please try again.');
     }
   };
 
@@ -99,9 +89,10 @@ export default function AddFeedModal({ onClose, onFeedAdded }: Props) {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2 text-xs font-bold tracking-widest uppercase bg-[#9ad37f]/20 hover:bg-[#9ad37f]/30 text-[#c7ff8b] border border-[#9ad37f]/30 hover:border-[#9ad37f]/60 rounded-lg transition-all"
+              disabled={status === 'loading'}
+              className="flex-1 py-2 text-xs font-bold tracking-widest uppercase bg-[#9ad37f]/20 hover:bg-[#9ad37f]/30 text-[#c7ff8b] border border-[#9ad37f]/30 hover:border-[#9ad37f]/60 rounded-lg transition-all disabled:opacity-50"
             >
-              Add Feed
+              {status === 'loading' ? 'Adding…' : 'Add Feed'}
             </button>
           </div>
         </form>

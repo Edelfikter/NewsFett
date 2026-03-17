@@ -17,7 +17,7 @@ const MapCanvas = dynamic(() => import('@/components/MapCanvas'), {
 });
 
 export default function Home() {
-  const { items, pinnedId, setPinnedId, dismissPopup, refreshLocalFeeds } = useNewsStream();
+  const { items, pinnedId, setPinnedId } = useNewsStream();
   const [showAddFeed, setShowAddFeed] = useState(false);
 
   return (
@@ -39,12 +39,7 @@ export default function Home() {
         </div>
       </div>
 
-      {showAddFeed && (
-        <AddFeedModal
-          onClose={() => setShowAddFeed(false)}
-          onFeedAdded={refreshLocalFeeds}
-        />
-      )}
+      {showAddFeed && <AddFeedModal onClose={() => setShowAddFeed(false)} />}
     </main>
   );
 }
