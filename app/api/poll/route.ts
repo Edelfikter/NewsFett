@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFeeds, saveNewsItem, itemExists } from '@/lib/redis';
+import { saveNewsItem, itemExists } from '@/lib/redis';
 import { fetchFeed, itemId } from '@/lib/rss';
 import { resolveItemLocation } from '@/lib/geocode';
 import { DEFAULT_FEEDS } from '@/lib/defaultFeeds';
@@ -20,15 +20,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Get stored + default feeds
-    let feeds: string[] = [];
-    try {
-      feeds = await getFeeds();
-    } catch {
-      // Redis not available; use defaults
-    }
-
-    const allFeeds = [...new Set([...DEFAULT_FEEDS, ...feeds])];
+    // Only poll the curated default feeds – user-added feeds are fetched
+    // per-device via /api/user-feeds and never written to the global store.
+    const allFeeds = DEFAULT_FEEDS;
     let saved = 0;
     let skipped = 0;
 
