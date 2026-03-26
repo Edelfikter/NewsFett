@@ -22,13 +22,16 @@ const userFeedsFetcher = ([, feeds]: [string, string[]]) => {
 
 export interface NewsItemWithUI extends NewsItem {
   flashing: boolean;
+  showPopup: boolean;
+  pinned: boolean;
 }
 
 export function useNewsStream() {
   const sinceRef = useRef<number>(Date.now() - 60 * 60 * 1000); // last hour
   const settledRef = useRef<boolean>(false);
+  const timerMap = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [items, setItems] = useState<NewsItemWithUI[]>(() =>
-    MOCK_ITEMS.map((it) => ({ ...it, flashing: false }))
+    MOCK_ITEMS.map((it) => ({ ...it, flashing: false, showPopup: false, pinned: false }))
   );
   const [pinnedId, setPinnedId] = useState<string | null>(null);
 
@@ -87,6 +90,8 @@ export function useNewsStream() {
       const withUI: NewsItemWithUI[] = newOnes.map((it) => ({
         ...it,
         flashing: shouldFlash,
+        showPopup: false,
+        pinned: false,
       }));
 
       if (shouldFlash) {
@@ -114,6 +119,7 @@ export function useNewsStream() {
 
       const withUI: NewsItemWithUI[] = newOnes.map((it) => ({
         ...it,
+        flashing: false,
         showPopup: false,
         pinned: false,
       }));

@@ -18,12 +18,7 @@ function getRedis(): Redis {
 export const FEEDS_KEY = 'feeds';
 export const NEWS_SORTED_KEY = 'news:sorted';
 
-// Feed management
-export async function addFeed(url: string): Promise<void> {
-  const r = getRedis();
-  await r.sadd(FEEDS_KEY, url);
-}
-
+// Feed management (read-only – feeds are only added via DEFAULT_FEEDS or per-device localStorage)
 export async function getFeeds(): Promise<string[]> {
   const r = getRedis();
   const members = await r.smembers(FEEDS_KEY);
